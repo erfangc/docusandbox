@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*
 import java.awt.Desktop
 import java.net.URI
 import java.util.*
+import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("sales-contracts")
@@ -87,9 +88,10 @@ class SalesContractsController(private val envelopesApi: EnvelopesApi) {
         return Base64.getEncoder().encodeToString(classPathResource.inputStream.readAllBytes())
     }
 
-    @PutMapping
-    fun signContract() {
-
+    @PutMapping("docusign-events")
+    fun envelope(request: HttpServletRequest) {
+        val body = String(request.inputStream.readAllBytes())
+        log.info("Received event from DocuSign connect body={}", body)
     }
 
 }
