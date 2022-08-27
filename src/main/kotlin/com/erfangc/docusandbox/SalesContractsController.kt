@@ -88,7 +88,7 @@ class SalesContractsController(private val envelopesApi: EnvelopesApi) {
         return Base64.getEncoder().encodeToString(classPathResource.inputStream.readAllBytes())
     }
 
-    @PutMapping("docusign-events")
+    @PostMapping("docusign-events")
     fun envelope(request: HttpServletRequest) {
         val body = String(request.inputStream.readAllBytes())
         log.info("Received event from DocuSign connect body={}", body)
