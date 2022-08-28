@@ -21,9 +21,33 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
     private val dataDir = "data"
     private val encoder = Base64.getEncoder()
     
-    fun getTemplate(filename: String): Template {
+    fun getTemplate(filename: String, includeTemplateBytes: Boolean = false): Template {
         val persistedFile = File(dataDir, "$filename.template.json")
-        return objectMapper.readValue(persistedFile)
+        val ret = objectMapper.readValue<Template>(persistedFile)
+        return if (!includeTemplateBytes) {
+            ret.copy(bytesAsBase64 = "")
+        } else {
+            ret
+        }
+    }
+    
+    fun updateField(
+        filename: String,
+        fieldName: String,
+        autoFillSource: String,
+    ): Template {
+        val template = getTemplate(filename, true)
+        val updatedTemplate = template.copy(
+            fields = template.fields.map { field: Field ->
+                if (field.name == fieldName) {
+                    field.copy(autoFillSource = autoFillSource)
+                } else {
+                    field
+                }
+            }
+        )
+        writeTemplate(filename, updatedTemplate)
+        return updatedTemplate.copy(bytesAsBase64 = "")
     }
     
     fun createTemplate(file: MultipartFile): Template {
@@ -55,13 +79,17 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
             fields = fields,
             bytesAsBase64 = encoder.encodeToString(bytes)
         )
-        
-        val persistedFile = File(dataDir, "$filename.template.json")
-        persistedFile.writeText(objectWriter.writeValueAsString(template))
+
+        writeTemplate(filename, template)
 
         return template
     }
-    
+
+    private fun writeTemplate(filename: String, template: Template) {
+        val persistedFile = File(dataDir, "$filename.template.json")
+        persistedFile.writeText(objectWriter.writeValueAsString(template))
+    }
+
     private fun PDDocument.pagesOf(field: PDField) = field
         .widgets
         .map { widget -> pages.indexOf(widget.page) }

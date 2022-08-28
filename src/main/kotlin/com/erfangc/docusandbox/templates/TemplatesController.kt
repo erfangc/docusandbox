@@ -18,4 +18,17 @@ class TemplatesController(
     fun getTemplate(@PathVariable filename: String): Template {
         return templatesService.getTemplate(filename)
     }
+
+    @PatchMapping("{filename}/{fieldName}")
+    fun updateField(
+        @PathVariable fieldName: String, 
+        @PathVariable filename: String,
+        @RequestParam autoFillSource:String,
+    ): Template {
+        return templatesService.updateField(
+            filename = filename,
+            fieldName = fieldName,
+            autoFillSource = autoFillSource,
+        )
+    }
 }

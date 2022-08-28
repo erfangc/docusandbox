@@ -4,7 +4,7 @@
     "name" : "DAYS",
     "type" : "TEXT_FIELD",
     "pages" : [ 1 ],
-    "autoFillSource" : null
+    "autoFillSource" : "members.days"
   }, {
     "name" : "COMPANY_NAME",
     "type" : "TEXT_FIELD",
