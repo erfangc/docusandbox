@@ -14,6 +14,7 @@ class DocuSignConfiguration {
         val docuSignEndpoint = System.getenv("DOCU_SIGN_ENDPOINT") ?: "https://demo.docusign.net/restapi"
         val docuSignOAuthBasePath = System.getenv("DOCU_SIGN_OAUTH_BASE_PATH") ?: "account-d.docusign.com"
         val docuSignClientId = System.getenv("DOCU_SIGN_CLIENT_ID") ?: "99b5362a-7429-4f48-aee7-4d3a14c42eb1"
+        val docuSignUserId = System.getenv("DOCU_SIGN_USER_ID") ?: "649b0028-d969-4200-b478-14456e7d571b"
     }
 
     @Bean
@@ -22,9 +23,11 @@ class DocuSignConfiguration {
         apiClient.setOAuthBasePath(docuSignOAuthBasePath)
         val scopes = ArrayList<String>()
         scopes.add("signature")
+        scopes.add("impersonation")
         val privateKeyBytes = ClassPathResource("private.key").inputStream.readAllBytes()
-        val oAuthToken = apiClient.requestJWTApplicationToken(
+        val oAuthToken = apiClient.requestJWTUserToken(
             docuSignClientId,
+            docuSignUserId,
             scopes,
             // FIXME do not store this inline, somehow derive from env var
             privateKeyBytes,

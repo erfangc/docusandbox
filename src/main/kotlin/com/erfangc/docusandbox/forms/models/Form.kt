@@ -6,7 +6,7 @@ data class Form(
     val envelopeId: String? = null,
     val documentBase64: String,
     val filename: String,
-    val input: Map<String, Any?>,
+    val input: Map<String, Any>,
     val recipientEmail: String,
     val recipientName: String,
 )

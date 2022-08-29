@@ -13,8 +13,13 @@ class DocuSignService(private val envelopesApi: EnvelopesApi) {
 
     private val log = LoggerFactory.getLogger(DocuSignService::class.java)
 
-    fun sendDocumentForSigning(input: Form): EnvelopeSummary {
-        log.info("Creating sales contract for email={}", input.recipientEmail)
+    fun sendDocumentForSigning(form: Form): EnvelopeSummary {
+        log.info(
+            "Creating DocuSign envelope for email={} formId={} templateFilename={}", 
+            form.recipientEmail,
+            form.formId,
+            form.templateFilename,
+        )
         // create the sign here for our recipient
         val signHere = SignHere()
         signHere.documentId = "1"
@@ -25,17 +30,17 @@ class DocuSignService(private val envelopesApi: EnvelopesApi) {
 
         // create the signer
         val signer = Signer()
-        signer.email = input.recipientEmail
-        signer.name = input.recipientName
+        signer.email = form.recipientEmail
+        signer.name = form.recipientName
         signer.recipientId = "1"
         signer.tabs = tabs
 
         // create the document to put into the envelope
         val document = Document()
         document.documentId = "1"
-        document.name = input.filename
+        document.name = form.filename
         document.fileExtension = "pdf"
-        document.documentBase64 = input.documentBase64
+        document.documentBase64 = form.documentBase64
 
         // create the envelope
         val envelopeDefinition = EnvelopeDefinition()

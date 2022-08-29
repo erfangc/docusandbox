@@ -4,6 +4,7 @@ import com.erfangc.docusandbox.forms.models.Form
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@RequestMapping("forms")
 class FormsController(private val formsService: FormsService) {
     @PostMapping
     fun createForm(
@@ -31,7 +32,7 @@ class FormsController(private val formsService: FormsService) {
         return formsService.getForm(formId)
     }
     
-    @PostMapping("{formId}")
+    @PutMapping("{formId}/signings")
     fun signForm(@PathVariable formId: String): Form {
         return formsService.signForm(formId)
     }

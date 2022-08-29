@@ -59,13 +59,14 @@ class FormsService(
         return objectMapper.readValue(file)
     }
 
-    fun updateForm(formId: String, input: Map<String, Any?>): Form {
+    fun updateForm(formId: String, input: Map<String, Any>): Form {
         val form = getForm(formId)
         val (template, data) = prepare(templateFilename = form.templateFilename, email = form.recipientEmail)
-        val documentBase64 = formFiller.createDocumentBase64(template, data)
+        val newInput = form.input + data + input
+        val documentBase64 = formFiller.createDocumentBase64(template, newInput)
         val updatedForm = form.copy(
             documentBase64 = documentBase64,
-            input = form.input + input,
+            input = newInput,
         )
         saveForm(updatedForm)
         return updatedForm
@@ -102,7 +103,7 @@ class FormsService(
     }
 
     private fun saveForm(form: Form) {
-        val file = File(formsDir, form.filename)
+        val file = File(formsDir, form.formId + ".json")
         objectWriter.writeValue(file, form)
     }
 }

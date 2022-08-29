@@ -66,11 +66,13 @@ class FormFiller {
         } else {
             // attempt to autofill
             if (autoFillInstruction == null) {
-                error("field $fullyQualifiedName must contain a autoFillInstruction")
+                log.error("Unable to autofill field $fullyQualifiedName, missing a autoFillInstruction")
+                return
             }
             val copyFrom = autoFillInstruction.copyFrom
             data[copyFrom].toString()
         }
+        log.info("Text field {} value set to {}", fullyQualifiedName, value)
     }
 
     private fun PDRadioButton.fillRadioButton(
