@@ -4,7 +4,7 @@ import com.erfangc.docusandbox.forms.models.Form
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("forms")
+@RequestMapping("/api/forms")
 class FormsController(private val formsService: FormsService) {
     @PostMapping
     fun createForm(

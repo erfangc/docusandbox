@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
-@RequestMapping("templates")
+@RequestMapping("/api/templates")
 class TemplatesController(
     private val templatesService: TemplatesService
 ) {

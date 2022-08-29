@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("user-profiles")
+@RequestMapping("/api/user-profiles")
 class UserProfileController(private val userProfileService: UserProfileService) {
     @PutMapping
     fun upsert(@RequestBody userProfile: UserProfile) {
