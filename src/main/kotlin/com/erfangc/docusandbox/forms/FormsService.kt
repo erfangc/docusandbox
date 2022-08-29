@@ -24,7 +24,7 @@ class FormsService(
     fun createForm(
         templateFilename: String,
         email: String,
-        input: Map<String, Any?> = emptyMap(),
+        input: Map<String, Any> = emptyMap(),
     ): Form {
         val (template, data) = prepare(templateFilename, email)
         val documentBase64 = formFiller.createDocumentBase64(template, data + input)
@@ -58,10 +58,10 @@ class FormsService(
         saveForm(updatedForm)
         return updatedForm
     }
-    
+
     private fun prepare(
         templateFilename: String, email: String
-    ): Pair<Template, Map<String, Any?>> {
+    ): Pair<Template, Map<String, Any>> {
         val template = templatesService.getTemplate(
             filename = templateFilename,
             includeTemplateBytes = true,
@@ -70,11 +70,12 @@ class FormsService(
         val userProfile = userProfileService.getUser(email)
 
         // create 'data' by merging all kinds of data ...
-        val data = mapOf<String, Any?>(
+        val data: Map<String, Any> = listOf(
             "userProfile.name" to userProfile.name,
             "userProfile.birthDate" to userProfile.birthDate.toString(),
             "userProfile.sex" to userProfile.sex.toString(),
             "userProfile.email" to userProfile.email,
+            "userProfile.ownership" to userProfile.ownership,
             "userProfile.eveningPhone" to userProfile.eveningPhone,
             "userProfile.dayPhone" to userProfile.dayPhone,
             "userProfile.address.line1" to userProfile.address?.line1,
@@ -83,7 +84,8 @@ class FormsService(
             "userProfile.address.state" to userProfile.address?.state,
             "userProfile.address.country" to userProfile.address?.country,
             "userProfile.address.zipCode" to userProfile.address?.zipCode,
-        )
+        ).filter { it.second != null }.associate { it.first to it.second!! }
+        
         return Pair(template, data)
     }
 

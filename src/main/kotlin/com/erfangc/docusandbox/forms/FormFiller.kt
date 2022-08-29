@@ -8,6 +8,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox
 import org.apache.pdfbox.pdmodel.interactive.form.PDField
 import org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton
 import org.apache.pdfbox.pdmodel.interactive.form.PDTextField
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -17,10 +18,11 @@ class FormFiller {
 
     private val decoder = Base64.getDecoder()
     private val encoder = Base64.getEncoder()
+    private val log = LoggerFactory.getLogger(FormFiller::class.java)
 
     fun createDocumentBase64(
         template: Template,
-        data: Map<String, Any?>,
+        data: Map<String, Any>,
     ): String {
         val templateBytes = decoder.decode(template.documentBase64)
         val pdDocument = PDDocument.load(templateBytes)
@@ -35,7 +37,7 @@ class FormFiller {
         return encoder.encodeToString(outputStream.toByteArray())
     }
 
-    private fun PDDocument.fillField(field: Field, data: Map<String, Any?>) {
+    private fun PDDocument.fillField(field: Field, data: Map<String, Any>) {
         val acroForm = documentCatalog.acroForm
         val pdField = acroForm.getField(field.name)
         pdField.fillField(field.autoFillInstruction, data)
@@ -43,19 +45,19 @@ class FormFiller {
 
     private fun PDField.fillField(
         autoFillInstruction: AutoFillInstruction?,
-        data: Map<String, Any?>,
+        data: Map<String, Any>,
     ) {
         when (this) {
             is PDTextField -> fillTextField(autoFillInstruction, data)
             is PDRadioButton -> fillRadioButton(autoFillInstruction, data)
             is PDCheckBox -> fillCheckBox(autoFillInstruction, data)
-            else -> TODO()
+            else -> TODO("Unsupported field type for autofill")
         }
     }
 
     private fun PDTextField.fillTextField(
         autoFillInstruction: AutoFillInstruction?,
-        data: Map<String, Any?>,
+        data: Map<String, Any>,
     ) {
         // first check if 'data' explicitly provide a value
         val explicitValue = data[fullyQualifiedName]
@@ -67,21 +69,20 @@ class FormFiller {
                 error("field $fullyQualifiedName must contain a autoFillInstruction")
             }
             val copyFrom = autoFillInstruction.copyFrom
-            // TODO apply transforms and conditional
             data[copyFrom].toString()
         }
     }
 
     private fun PDRadioButton.fillRadioButton(
         autoFillInstruction: AutoFillInstruction?,
-        data: Map<String, Any?>,
+        data: Map<String, Any>,
     ) {
         TODO("Not yet implemented")
     }
 
     private fun PDCheckBox.fillCheckBox(
         autoFillInstruction: AutoFillInstruction?,
-        data: Map<String, Any?>,
+        data: Map<String, Any>,
     ) {
         // first check if 'data' explicitly provide a value
         val explicitValue = data[fullyQualifiedName]
@@ -94,14 +95,22 @@ class FormFiller {
         } else {
             // attempt to autofill
             if (autoFillInstruction == null) {
-                error("field $fullyQualifiedName must contain a autoFillInstruction")
+                log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoFillInstruction")
+                return
             }
+            
             val onlyIf = autoFillInstruction.onlyIf
-                ?: error("field $fullyQualifiedName must contain a autoFillInstruction.onlyIf")
-            // TODO
+            if (onlyIf == null) {
+                log.error("Unable to autofill checkbox field $fullyQualifiedName, missing a autoFillInstruction.onlyIf")
+                return
+            }
+            
             val dataProperty = onlyIf.dataProperty
             val dataPropertyValue = data[dataProperty]
-                ?: error("field $fullyQualifiedName cannot be autofilled, unable to determine the value of $dataProperty")
+            if (dataPropertyValue == null) {
+                log.error("Unable to autofill checkbox field $fullyQualifiedName, unable to determine the value of $dataProperty")
+                return
+            }
 
             if (onlyIf.equals != null && dataPropertyValue == onlyIf.equals) {
                 check()
@@ -109,12 +118,15 @@ class FormFiller {
                 if (onlyIf.isOneOf.contains(dataPropertyValue)) {
                     check()
                 }
-            } else if (onlyIf.greaterThan != null) {
-                // TODO
-            } else if (onlyIf.lessThan != null) {
-                // TODO
-            } else if (onlyIf.isBetween != null) {
-                // TODO
+            } else if (dataPropertyValue is Number) {
+                val dataPropertyDoubleValue = dataPropertyValue.toDouble()
+                if (onlyIf.greaterThan != null && onlyIf.greaterThan > dataPropertyDoubleValue) {
+                    check()
+                } else if (onlyIf.lessThan != null && onlyIf.lessThan < dataPropertyDoubleValue) {
+                    check()
+                } else if (onlyIf.isBetween != null && onlyIf.isBetween.lowerBound < dataPropertyDoubleValue) {
+                    check()
+                }
             }
         }
     }
