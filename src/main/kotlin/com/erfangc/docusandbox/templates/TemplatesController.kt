@@ -1,5 +1,6 @@
 package com.erfangc.docusandbox.templates
 
+import com.erfangc.docusandbox.templates.models.AutoFillInstruction
 import com.erfangc.docusandbox.templates.models.Template
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -20,15 +21,15 @@ class TemplatesController(
     }
 
     @PatchMapping("{filename}/{fieldName}")
-    fun updateField(
+    fun updateAutoFillInstruction(
         @PathVariable fieldName: String, 
         @PathVariable filename: String,
-        @RequestParam autoFillSource:String,
+        @RequestBody autoFillInstruction: AutoFillInstruction,
     ): Template {
         return templatesService.updateField(
             filename = filename,
             fieldName = fieldName,
-            autoFillSource = autoFillSource,
+            autoFillInstruction = autoFillInstruction,
         )
     }
 }

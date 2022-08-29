@@ -1,5 +1,6 @@
 package com.erfangc.docusandbox.templates
 
+import com.erfangc.docusandbox.templates.models.AutoFillInstruction
 import com.erfangc.docusandbox.templates.models.Field
 import com.erfangc.docusandbox.templates.models.Template
 import com.erfangc.docusandbox.templates.models.Type
@@ -11,58 +12,58 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
-import java.util.Base64
+import java.util.*
 
 @Service
 class TemplatesService(private val objectMapper: ObjectMapper) {
 
     private val objectWriter = objectMapper.writerWithDefaultPrettyPrinter()
     private val log = LoggerFactory.getLogger(TemplatesService::class.java)
-    private val dataDir = "data"
+    private val templatesDir = System.getenv("TEMPLATES_DIR") ?: "templates"
     private val encoder = Base64.getEncoder()
-    
+
     fun getTemplate(filename: String, includeTemplateBytes: Boolean = false): Template {
-        val persistedFile = File(dataDir, "$filename.template.json")
+        val persistedFile = File(templatesDir, "$filename.template.json")
         val ret = objectMapper.readValue<Template>(persistedFile)
         return if (!includeTemplateBytes) {
-            ret.copy(bytesAsBase64 = "")
+            ret.copy(documentBase64 = "")
         } else {
             ret
         }
     }
-    
+
     fun updateField(
         filename: String,
         fieldName: String,
-        autoFillSource: String,
+        autoFillInstruction: AutoFillInstruction,
     ): Template {
         val template = getTemplate(filename, true)
         val updatedTemplate = template.copy(
             fields = template.fields.map { field: Field ->
                 if (field.name == fieldName) {
-                    field.copy(autoFillSource = autoFillSource)
+                    field.copy(autoFillInstruction = autoFillInstruction)
                 } else {
                     field
                 }
             }
         )
         writeTemplate(filename, updatedTemplate)
-        return updatedTemplate.copy(bytesAsBase64 = "")
+        return updatedTemplate.copy(documentBase64 = "")
     }
-    
+
     fun createTemplate(file: MultipartFile): Template {
-        
+
         val bytes = file.bytes
         val pdDocument = PDDocument.load(bytes)
         val filename = file.originalFilename ?: file.name
-        
+
         val documentCatalog = pdDocument.documentCatalog
         val acroForm = documentCatalog.acroForm
-        
+
         val fields = acroForm.fields.map { field ->
             Field(
-                name = field.fullyQualifiedName, 
-                type = type(field), 
+                name = field.fullyQualifiedName,
+                type = type(field),
                 pages = pdDocument.pagesOf(field),
             )
         }
@@ -73,11 +74,11 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
         }
 
         pdDocument.close()
-        
+
         val template = Template(
             filename = filename,
             fields = fields,
-            bytesAsBase64 = encoder.encodeToString(bytes)
+            documentBase64 = encoder.encodeToString(bytes)
         )
 
         writeTemplate(filename, template)
@@ -86,7 +87,7 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
     }
 
     private fun writeTemplate(filename: String, template: Template) {
-        val persistedFile = File(dataDir, "$filename.template.json")
+        val persistedFile = File(templatesDir, "$filename.template.json")
         persistedFile.writeText(objectWriter.writeValueAsString(template))
     }
 

@@ -4,5 +4,6 @@ data class Field(
     val name: String,
     val type: Type,
     val pages: List<Int>,
-    val autoFillSource: String? = null,
+    val autoFillInstruction: AutoFillInstruction? = null,
 )
+
