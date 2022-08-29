@@ -13,7 +13,7 @@ class DocuSignService(private val envelopesApi: EnvelopesApi) {
 
     private val log = LoggerFactory.getLogger(DocuSignService::class.java)
 
-    fun sendDocumentForSigning(input: Form): EnvelopeSummary? {
+    fun sendDocumentForSigning(input: Form): EnvelopeSummary {
         log.info("Creating sales contract for email={}", input.recipientEmail)
         // create the sign here for our recipient
         val signHere = SignHere()

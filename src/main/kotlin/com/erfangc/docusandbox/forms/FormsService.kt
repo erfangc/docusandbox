@@ -1,11 +1,13 @@
 package com.erfangc.docusandbox.forms
 
+import com.erfangc.docusandbox.docusign.DocuSignService
 import com.erfangc.docusandbox.forms.models.Form
 import com.erfangc.docusandbox.templates.TemplatesService
 import com.erfangc.docusandbox.templates.models.Template
 import com.erfangc.docusandbox.userprofile.UserProfileService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
 import java.util.*
@@ -15,12 +17,14 @@ class FormsService(
     private val templatesService: TemplatesService,
     private val userProfileService: UserProfileService,
     private val objectMapper: ObjectMapper,
+    private val docuSignService: DocuSignService,
     private val formFiller: FormFiller,
 ) {
 
     private val objectWriter = objectMapper.writerWithDefaultPrettyPrinter()
     private val formsDir = System.getenv("FORMS_DIR") ?: "forms"
-
+    private val log = LoggerFactory.getLogger(FormsService::class.java)
+    
     fun createForm(
         templateFilename: String,
         email: String,
@@ -40,6 +44,14 @@ class FormsService(
         )
         saveForm(form)
         return form
+    }
+    
+    fun signForm(formId: String): Form {
+        val form = getForm(formId)
+        val envelopeSummary = docuSignService.sendDocumentForSigning(form)
+        val ret = form.copy(envelopeId = envelopeSummary.envelopeId)
+        saveForm(ret)
+        return ret
     }
 
     fun getForm(formId: String): Form {

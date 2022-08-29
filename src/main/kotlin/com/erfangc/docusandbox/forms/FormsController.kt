@@ -30,4 +30,9 @@ class FormsController(private val formsService: FormsService) {
     fun getForm(@PathVariable formId: String): Form {
         return formsService.getForm(formId)
     }
+    
+    @PostMapping("{formId}")
+    fun signForm(@PathVariable formId: String): Form {
+        return formsService.signForm(formId)
+    }
 }
