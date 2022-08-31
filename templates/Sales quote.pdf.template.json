@@ -4,20 +4,12 @@
     "name" : "DAYS",
     "type" : "TEXT_FIELD",
     "pages" : [ 1 ],
-    "autoFillInstruction" : {
-      "copyFrom" : "",
-      "onlyIf" : null,
-      "transform" : null
-    }
+    "autoFillInstruction" : null
   }, {
     "name" : "COMPANY_NAME",
     "type" : "TEXT_FIELD",
     "pages" : [ 1, 2 ],
-    "autoFillInstruction" : {
-      "copyFrom" : "",
-      "onlyIf" : null,
-      "transform" : null
-    }
+    "autoFillInstruction" : null
   }, {
     "name" : "AGREE_EXP",
     "type" : "CHECK_BOX",
