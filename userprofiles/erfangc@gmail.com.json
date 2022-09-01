@@ -2,9 +2,16 @@
   "email" : "erfangc@gmail.com",
   "name" : "Erfang Chen",
   "ownership" : null,
-  "dayPhone" : null,
-  "eveningPhone" : null,
-  "address" : null,
+  "dayPhone" : "7346040133",
+  "eveningPhone" : "",
+  "address" : {
+    "line1" : "100 Eton Row",
+    "line2" : "Unit 303",
+    "zipCode" : "07086",
+    "state" : "NJ",
+    "city" : "Weehawken",
+    "country" : "United States"
+  },
   "birthDate" : null,
   "sex" : "MALE"
 }

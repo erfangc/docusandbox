@@ -23,7 +23,7 @@ class DocuSignService(private val envelopesApi: EnvelopesApi) {
         // create the sign here for our recipient
         val signHere = SignHere()
         signHere.documentId = "1"
-        signHere.anchorString = "/SIG_NAME/"
+        signHere.anchorString = "/SIGNATURE/"
         // add the sign here to the tabs that will belong to the recipient
         val tabs = Tabs()
         tabs.signHereTabs = listOf(signHere)
