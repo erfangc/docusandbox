@@ -61,8 +61,8 @@ class FormFiller {
     ) {
         // first check if 'data' explicitly provide a value
         val explicitValue = data[fullyQualifiedName]
-        value = if (explicitValue != null) {
-            explicitValue.toString()
+        if (explicitValue != null) {
+            value = explicitValue.toString()
         } else {
             // attempt to autofill
             if (autoFillInstruction == null) {
@@ -70,7 +70,12 @@ class FormFiller {
                 return
             }
             val copyFrom = autoFillInstruction.copyFrom
-            data[copyFrom].toString()
+            val valueFromData = data[copyFrom]
+            if (valueFromData != null) {
+                value = valueFromData.toString()
+            } else {
+                log.info("Unable to autofill field {} copyFrom {} resulted in null", fullyQualifiedName, copyFrom)
+            }
         }
         log.info("Text field {} value set to {}", fullyQualifiedName, value)
     }
