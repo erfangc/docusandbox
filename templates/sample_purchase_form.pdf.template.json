@@ -9,42 +9,74 @@
     "name" : "Name",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.name",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "BirthDate",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.birthDate",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "AddressLine1",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.line1",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "AddressLine2",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.line2",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "City",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.city",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "Zip",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.zipCode",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "Country",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.country",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "State",
     "type" : "TEXT_FIELD",
     "pages" : [ 0 ],
-    "autoFillInstruction" : null
+    "autoFillInstruction" : {
+      "copyFrom" : "userProfile.address.state",
+      "onlyIf" : null,
+      "transform" : null
+    }
   }, {
     "name" : "Amount",
     "type" : "TEXT_FIELD",

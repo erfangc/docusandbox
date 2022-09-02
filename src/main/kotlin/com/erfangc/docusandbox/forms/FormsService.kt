@@ -85,8 +85,8 @@ class FormsService(
         // create 'data' by merging all kinds of data ...
         val data: Map<String, Any> = listOf(
             "userProfile.name" to userProfile.name,
-            "userProfile.birthDate" to userProfile.birthDate.toString(),
-            "userProfile.sex" to userProfile.sex.toString(),
+            "userProfile.birthDate" to userProfile.birthDate?.toString(),
+            "userProfile.sex" to userProfile.sex?.toString(),
             "userProfile.email" to userProfile.email,
             "userProfile.ownership" to userProfile.ownership,
             "userProfile.eveningPhone" to userProfile.eveningPhone,
