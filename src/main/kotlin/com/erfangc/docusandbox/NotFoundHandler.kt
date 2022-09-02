@@ -14,7 +14,7 @@ import java.nio.charset.Charset
 class NotFoundHandler {
     @ExceptionHandler(NoHandlerFoundException::class)
     fun renderDefaultPage(): ResponseEntity<String> {
-        val file = ResourceUtils.getFile("classpath:/public/index.html")
+        val file = ResourceUtils.getFile("classpath:public/index.html")
         val inputStream = FileInputStream(file)
         val body = StreamUtils.copyToString(inputStream, Charset.defaultCharset())
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(body)
