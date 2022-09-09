@@ -1,7 +1,8 @@
 package com.erfangc.docusandbox.forms
 
-import com.erfangc.docusandbox.templates.models.AutoFillInstruction
+import com.erfangc.docusandbox.templates.models.AutoCheckIf
 import com.erfangc.docusandbox.templates.models.Field
+import com.erfangc.docusandbox.templates.models.Operator
 import com.erfangc.docusandbox.templates.models.Template
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox
@@ -40,23 +41,23 @@ class FormFiller {
     private fun PDDocument.fillField(field: Field, data: Map<String, Any>) {
         val acroForm = documentCatalog.acroForm
         val pdField = acroForm.getField(field.name)
-        pdField.fillField(field.autoFillInstruction, data)
+        pdField.fillField(field, data)
     }
 
     private fun PDField.fillField(
-        autoFillInstruction: AutoFillInstruction?,
+        field: Field,
         data: Map<String, Any>,
     ) {
         when (this) {
-            is PDTextField -> fillTextField(autoFillInstruction, data)
-            is PDRadioButton -> fillRadioButton(autoFillInstruction, data)
-            is PDCheckBox -> fillCheckBox(autoFillInstruction, data)
-            else -> TODO("Unsupported field type for autofill")
+            is PDTextField -> fillTextField(field, data)
+            is PDRadioButton -> fillRadioButton(field, data)
+            is PDCheckBox -> fillCheckBox(field, data)
+            else -> error("Unsupported field type for autofill")
         }
     }
 
     private fun PDTextField.fillTextField(
-        autoFillInstruction: AutoFillInstruction?,
+        field: Field?,
         data: Map<String, Any>,
     ) {
         // first check if 'data' explicitly provide a value
@@ -64,31 +65,33 @@ class FormFiller {
         if (explicitValue != null) {
             value = explicitValue.toString()
         } else {
-            // attempt to autofill
-            if (autoFillInstruction == null) {
-                log.error("Unable to autofill field $fullyQualifiedName, missing a autoFillInstruction")
-                return
-            }
-            val copyFrom = autoFillInstruction.copyFrom
-            val valueFromData = data[copyFrom]
-            if (valueFromData != null) {
-                value = valueFromData.toString()
-            } else {
-                log.info("Unable to autofill field {} copyFrom {} resulted in null", fullyQualifiedName, copyFrom)
+            // attempt to auto-fill
+            val autoFillFormula = field?.autoFillFormula
+            if (autoFillFormula != null && data[autoFillFormula] != null) {
+                value = data[autoFillFormula].toString()
             }
         }
         log.info("Text field {} value set to {}", fullyQualifiedName, value)
     }
 
     private fun PDRadioButton.fillRadioButton(
-        autoFillInstruction: AutoFillInstruction?,
+        field: Field,
         data: Map<String, Any>,
     ) {
-        TODO("Not yet implemented")
+        val radioOptions = field.radioOptions ?: emptyList()
+        // Find the first instance in which autoCheckIf is true and then select it
+        val idx = radioOptions.indexOfFirst { radioOption ->
+            evaluateAutoCheck(radioOption.autoCheckIf, data, fullyQualifiedName)
+        }
+        if (idx != -1) {
+            value = radioOptions[idx].value
+        } else {
+            log.error("Unable to autofill radio field $fullyQualifiedName, no option valued autoCheckIf conditions")
+        }
     }
 
     private fun PDCheckBox.fillCheckBox(
-        autoFillInstruction: AutoFillInstruction?,
+        field: Field?,
         data: Map<String, Any>,
     ) {
         // first check if 'data' explicitly provide a value
@@ -101,41 +104,116 @@ class FormFiller {
             }
         } else {
             // attempt to autofill
-            if (autoFillInstruction == null) {
-                log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoFillInstruction")
-                return
-            }
-            
-            val onlyIf = autoFillInstruction.onlyIf
-            if (onlyIf == null) {
-                log.error("Unable to autofill checkbox field $fullyQualifiedName, missing a autoFillInstruction.onlyIf")
-                return
-            }
-            
-            val dataProperty = onlyIf.dataProperty
-            val dataPropertyValue = data[dataProperty]
-            if (dataPropertyValue == null) {
-                log.error("Unable to autofill checkbox field $fullyQualifiedName, unable to determine the value of $dataProperty")
-                return
-            }
-
-            if (onlyIf.equals != null && dataPropertyValue == onlyIf.equals) {
+            val autoCheckIf = field?.autoCheckIf
+            val shouldCheck = evaluateAutoCheck(autoCheckIf, data, fullyQualifiedName)
+            if (shouldCheck) {
                 check()
-            } else if (onlyIf.isOneOf != null) {
-                if (onlyIf.isOneOf.contains(dataPropertyValue)) {
-                    check()
-                }
-            } else if (dataPropertyValue is Number) {
-                val dataPropertyDoubleValue = dataPropertyValue.toDouble()
-                if (onlyIf.greaterThan != null && onlyIf.greaterThan > dataPropertyDoubleValue) {
-                    check()
-                } else if (onlyIf.lessThan != null && onlyIf.lessThan < dataPropertyDoubleValue) {
-                    check()
-                } else if (onlyIf.isBetween != null && onlyIf.isBetween.lowerBound < dataPropertyDoubleValue) {
-                    check()
-                }
+            } else {
+                unCheck()
             }
         }
+    }
+
+    private fun evaluateAutoCheck(
+        autoCheckIf: AutoCheckIf? = null,
+        data: Map<String, Any?>,
+        fullyQualifiedName: String
+    ): Boolean {
+        if (autoCheckIf == null) {
+            log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf")
+            return false
+        }
+
+        val formula = autoCheckIf.formula
+        if (formula == null) {
+            log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.formula")
+            return false
+        }
+
+        val formulaValue = data[formula]
+        val formulaValueAsDouble = formulaValue.toString().toDoubleOrNull()
+        if (formulaValue == null) {
+            log.error("Unable to autofill checkbox field $fullyQualifiedName, unable to determine the value of formula=$formula")
+            return false
+        }
+
+        when (autoCheckIf.operator) {
+            Operator.EQUALS -> {
+                if (autoCheckIf.equals == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.greaterThan")
+                    return false
+                }
+                if (formulaValue == autoCheckIf.equals) {
+                    return true
+                }
+            }
+
+            Operator.IS_ONE_OF -> {
+                if (autoCheckIf.isOneOf == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.isOneOf")
+                    return false
+                } else {
+                    if (autoCheckIf.isOneOf.contains(formulaValue)) {
+                        return true
+                    }
+                }
+            }
+
+            Operator.IS_BETWEEN -> {
+                if (autoCheckIf.greaterThan == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.greaterThan")
+                    return false
+                }
+
+                if (autoCheckIf.lessThan == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.lessThan")
+                    return false
+                }
+
+                if (formulaValueAsDouble == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, formula value $formulaValue is not a number")
+                    return false
+                }
+
+                if (formulaValueAsDouble > autoCheckIf.greaterThan && formulaValueAsDouble < autoCheckIf.lessThan) {
+                    return true
+                }
+            }
+
+            Operator.GREATER_THAN -> {
+                if (autoCheckIf.greaterThan == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.greaterThan")
+                    return false
+                }
+                if (formulaValueAsDouble == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, formula value $formulaValue is not a number")
+                    return false
+                }
+                if (formulaValueAsDouble > autoCheckIf.greaterThan) {
+                    return true
+                }
+            }
+
+            Operator.LESS_THAN -> {
+                if (autoCheckIf.lessThan == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.lessThan")
+                    return false
+                }
+                if (formulaValueAsDouble == null) {
+                    log.error("Unable to autofill checkbox field $fullyQualifiedName, formula value $formulaValue is not a number")
+                    return false
+                }
+                if (formulaValueAsDouble < autoCheckIf.lessThan) {
+                    return true
+                }
+            }
+
+            null -> {
+                log.error("Unable to autofill checkbox field $fullyQualifiedName, missing autoCheckIf.operator")
+                return false
+            }
+        }
+        return false
     }
 
 }

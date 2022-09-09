@@ -1,7 +1,7 @@
 package com.erfangc.docusandbox.templates
 
-import com.erfangc.docusandbox.templates.models.AutoFillInstruction
 import com.erfangc.docusandbox.templates.models.Field
+import com.erfangc.docusandbox.templates.models.RadioOption
 import com.erfangc.docusandbox.templates.models.Template
 import com.erfangc.docusandbox.templates.models.Type
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -35,15 +35,15 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
     fun updateField(
         filename: String,
         fieldName: String,
-        autoFillInstruction: AutoFillInstruction,
+        field: Field,
     ): Template {
         val template = getTemplate(filename, true)
         val updatedTemplate = template.copy(
-            fields = template.fields.map { field: Field ->
-                if (field.name == fieldName) {
-                    field.copy(autoFillInstruction = autoFillInstruction)
-                } else {
+            fields = template.fields.map { existingField: Field ->
+                if (existingField.name == fieldName) {
                     field
+                } else {
+                    existingField
                 }
             }
         )
@@ -61,10 +61,18 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
         val acroForm = documentCatalog.acroForm
 
         val fields = acroForm.fields.map { field ->
+            
+            val radioOptions = if (field is PDRadioButton) {
+                field.onValues.map { RadioOption(value = it) }
+            } else {
+                null
+            }
+            
             Field(
                 name = field.fullyQualifiedName,
                 type = type(field),
                 pages = pdDocument.pagesOf(field),
+                radioOptions = radioOptions,
             )
         }
 

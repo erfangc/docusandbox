@@ -1,6 +1,6 @@
 package com.erfangc.docusandbox.templates
 
-import com.erfangc.docusandbox.templates.models.AutoFillInstruction
+import com.erfangc.docusandbox.templates.models.Field
 import com.erfangc.docusandbox.templates.models.Template
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -24,12 +24,12 @@ class TemplatesController(
     fun updateAutoFillInstruction(
         @PathVariable fieldName: String, 
         @PathVariable filename: String,
-        @RequestBody autoFillInstruction: AutoFillInstruction,
+        @RequestBody field: Field,
     ): Template {
         return templatesService.updateField(
             filename = filename,
             fieldName = fieldName,
-            autoFillInstruction = autoFillInstruction,
+            field = field,
         )
     }
 }
