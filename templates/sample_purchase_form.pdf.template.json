@@ -75,8 +75,14 @@
     "type" : "CHECK_BOX",
     "pages" : [ 0 ],
     "radioOptions" : null,
-    "autoFillFormula" : null,
-    "autoCheckIf" : null
+    "autoFillFormula" : "",
+    "autoCheckIf" : {
+      "formula" : "userProfile.sex",
+      "operator" : "EQUALS",
+      "greaterThan" : null,
+      "lessThan" : null,
+      "equals" : "MALE"
+    }
   }, {
     "name" : "PURCHASE_TYPE",
     "type" : "RADIO_BOX",
