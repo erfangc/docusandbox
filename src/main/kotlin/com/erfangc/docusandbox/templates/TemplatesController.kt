@@ -16,7 +16,7 @@ class TemplatesController(
     }
     
     @GetMapping("{filename}")
-    fun getTemplate(@PathVariable filename: String): Template {
+    fun getTemplate(@PathVariable filename: String): Template? {
         return templatesService.getTemplate(filename)
     }
 
@@ -25,7 +25,7 @@ class TemplatesController(
         @PathVariable fieldName: String, 
         @PathVariable filename: String,
         @RequestBody field: Field,
-    ): Template {
+    ): Template? {
         return templatesService.updateField(
             filename = filename,
             fieldName = fieldName,

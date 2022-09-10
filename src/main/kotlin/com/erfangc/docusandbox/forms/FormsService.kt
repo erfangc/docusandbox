@@ -23,7 +23,6 @@ class FormsService(
 
     private val objectWriter = objectMapper.writerWithDefaultPrettyPrinter()
     private val formsDir = System.getenv("FORMS_DIR") ?: "forms"
-    private val log = LoggerFactory.getLogger(FormsService::class.java)
     
     fun createForm(
         templateFilename: String,
@@ -78,7 +77,7 @@ class FormsService(
         val template = templatesService.getTemplate(
             filename = templateFilename,
             includeTemplateBytes = true,
-        )
+        ) ?: error("cannot find template $templateFilename")
 
         val userProfile = userProfileService.getUser(email)
 

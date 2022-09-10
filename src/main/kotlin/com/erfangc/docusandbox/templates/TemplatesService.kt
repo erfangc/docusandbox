@@ -22,13 +22,22 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
     private val templatesDir = System.getenv("TEMPLATES_DIR") ?: "templates"
     private val encoder = Base64.getEncoder()
 
-    fun getTemplate(filename: String, includeTemplateBytes: Boolean = false): Template {
+    fun getTemplate(filename: String, includeTemplateBytes: Boolean = false): Template? {
         val persistedFile = File(templatesDir, "$filename.template.json")
-        val ret = objectMapper.readValue<Template>(persistedFile)
-        return if (!includeTemplateBytes) {
-            ret.copy(documentBase64 = "")
-        } else {
-            ret
+        if (!persistedFile.exists()) {
+            return null
+        }
+
+        return try {
+            val ret = objectMapper.readValue<Template>(persistedFile)
+            if (!includeTemplateBytes) {
+                ret.copy(documentBase64 = "")
+            } else {
+                ret
+            }
+        } catch (e: Exception) {
+            log.error("Unable to deserialize template file {}", persistedFile)
+            null
         }
     }
 
@@ -36,8 +45,8 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
         filename: String,
         fieldName: String,
         field: Field,
-    ): Template {
-        val template = getTemplate(filename, true)
+    ): Template? {
+        val template = getTemplate(filename, true) ?: return null
         val updatedTemplate = template.copy(
             fields = template.fields.map { existingField: Field ->
                 if (existingField.name == fieldName) {
@@ -57,10 +66,16 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
         val pdDocument = PDDocument.load(bytes)
         val filename = file.originalFilename ?: file.name
 
+        val existingTemplate = getTemplate(filename)
+        val existingFields = existingTemplate?.fields?.associateBy { it.name } ?: emptyMap()
+
         val documentCatalog = pdDocument.documentCatalog
         val acroForm = documentCatalog.acroForm
 
         val fields = acroForm.fields.map { field ->
+            
+            val type = type(field)
+            val existingField = existingFields[field.fullyQualifiedName]
             
             val radioOptions = if (field is PDRadioButton) {
                 field.onValues.map { RadioOption(value = it) }
@@ -68,12 +83,17 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
                 null
             }
             
-            Field(
-                name = field.fullyQualifiedName,
-                type = type(field),
-                pages = pdDocument.pagesOf(field),
-                radioOptions = radioOptions,
-            )
+
+            if (existingField != null && existingField.type == type) {
+                existingField
+            } else {
+                Field(
+                    name = field.fullyQualifiedName,
+                    type = type,
+                    pages = pdDocument.pagesOf(field),
+                    radioOptions = radioOptions,
+                )
+            }
         }
 
         log.info("Found {} fields in file {}", fields.size, filename)
@@ -86,7 +106,7 @@ class TemplatesService(private val objectMapper: ObjectMapper) {
         val template = Template(
             filename = filename,
             fields = fields,
-            documentBase64 = encoder.encodeToString(bytes)
+            documentBase64 = encoder.encodeToString(bytes),
         )
 
         writeTemplate(filename, template)
